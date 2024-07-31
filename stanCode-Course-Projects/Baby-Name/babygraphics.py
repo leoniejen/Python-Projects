@@ -56,6 +56,8 @@ def draw_fixed_lines(canvas):
     """
     canvas.delete('all')            # delete all existing lines from the canvas
 
+    # ----- Write your code below this line ----- #
+
     # Draw two horizontal fixed lines
     canvas.create_line(GRAPH_MARGIN_SIZE, GRAPH_MARGIN_SIZE, CANVAS_WIDTH-GRAPH_MARGIN_SIZE, GRAPH_MARGIN_SIZE)
     canvas.create_line(GRAPH_MARGIN_SIZE, CANVAS_HEIGHT-GRAPH_MARGIN_SIZE, CANVAS_WIDTH-GRAPH_MARGIN_SIZE, CANVAS_HEIGHT-GRAPH_MARGIN_SIZE)
@@ -81,39 +83,42 @@ def draw_names(canvas, name_data, lookup_names):
     """
     draw_fixed_lines(canvas)        # draw the fixed background grid
 
+    # ----- Write your code below this line ----- #
     def get_y_coordinate(y):
-        # print(y)
-        if y == '*':
-            return CANVAS_HEIGHT - GRAPH_MARGIN_SIZE
-        else:
-            return int(y) * (CANVAS_HEIGHT - 2 * GRAPH_MARGIN_SIZE) / 1000 + GRAPH_MARGIN_SIZE
+        """
+        calculate y coordinate displayed on the canvas according to the data given
+        Args:
+            y: str
+        Returns: y coordinate, int
+        """
+        # if the name is not in the ranking, plot at the bottom of canvas
+        # otherwise, based on rankings, plot correctly according to height ratio
+        return CANVAS_HEIGHT - GRAPH_MARGIN_SIZE if y == '*' else int(y) * (
+                    CANVAS_HEIGHT - 2 * GRAPH_MARGIN_SIZE) / 1000 + GRAPH_MARGIN_SIZE
 
-    for lookup_name in lookup_names:
+    for lookup_name in lookup_names:  # loop over the names users entered
         if lookup_name in name_data:
-            # print(name_data[lookup_name])
-            # print(name_data[lookup_name]['1900'])
+            color = COLORS[lookup_names.index(lookup_name) % len(COLORS)]
 
-            year_rank = {}
-            for i in range(len(YEARS)):
-                # save lookup_name's data of year and rank in year_rank dict
-                if str(YEARS[i]) in name_data[lookup_name]:
-                    year_rank[YEARS[i]] = name_data[lookup_name][str(YEARS[i])]
-                else:
-                    year_rank[YEARS[i]] = '*'
+            # type of year_rank: dict
+            # if is in ranking, get the rank from name_data and save to year_rank, otherwise save '*' to year_rank
+            year_rank = {year: name_data[lookup_name].get(str(year), '*') for year in YEARS}
 
-                # add lines and text for each lookup_name
-                if i == 0:    # manipulate first year's data of each name
-                    previous_point = get_x_coordinate(CANVAS_WIDTH, 0), get_y_coordinate(year_rank[YEARS[0]])
-                    canvas.create_text(get_x_coordinate(CANVAS_WIDTH, 0)+TEXT_DX, get_y_coordinate(year_rank[YEARS[0]]),
-                                       text=f'{lookup_name} {year_rank[YEARS[0]]}', anchor=tkinter.SW,
-                                       fill=COLORS[lookup_names.index(lookup_name) % len(COLORS)])
-                else:  # manipulate the other year's data of each name
-                    canvas.create_line(*previous_point, get_x_coordinate(CANVAS_WIDTH, i), get_y_coordinate(year_rank[YEARS[i]]), width=LINE_WIDTH, fill=COLORS[lookup_names.index(lookup_name) % len(COLORS)])
-                    canvas.create_text(get_x_coordinate(CANVAS_WIDTH, i) + TEXT_DX,
-                                       get_y_coordinate(year_rank[YEARS[i]]),
-                                       text=f'{lookup_name} {year_rank[YEARS[i]]}', anchor=tkinter.SW,
-                                       fill=COLORS[lookup_names.index(lookup_name) % len(COLORS)])
-                    previous_point = get_x_coordinate(CANVAS_WIDTH, i), get_y_coordinate(year_rank[YEARS[i]])  # iterate previous_point to current point
+            # manipulate first year's data
+            # initialized previous_point with first year's data
+            previous_point = get_x_coordinate(CANVAS_WIDTH, 0), get_y_coordinate(year_rank[YEARS[0]])
+            # label first year's rank data
+            canvas.create_text(get_x_coordinate(CANVAS_WIDTH, 0) + TEXT_DX, get_y_coordinate(year_rank[YEARS[0]]),
+                               text=f'{lookup_name} {year_rank[YEARS[0]]}', anchor=tkinter.SW, fill=color)
+
+            # manipulate the rest of the years' data
+            for i in range(1, len(YEARS)):
+                current_point = get_x_coordinate(CANVAS_WIDTH, i), get_y_coordinate(year_rank[YEARS[i]])
+                # every line starts with precious year's data, end with current year's data
+                canvas.create_line(*previous_point, *current_point, width=LINE_WIDTH, fill=color)
+                canvas.create_text(current_point[0] + TEXT_DX, current_point[1],
+                                   text=f'{lookup_name} {year_rank[YEARS[i]]}', anchor=tkinter.SW, fill=color)
+                previous_point = current_point  # iterate previous_point to current point
 
 
 # main() code is provided, feel free to read through it but DO NOT MODIFY
